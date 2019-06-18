@@ -1,0 +1,28 @@
+Results got during my testing of the first part of the final project:
+
+Im using 3 different species to test results on each subpage:
+    - Homo sapiens
+    - Mus Musculus
+    - Danio rerio
+
+Test results of list of species:
+    - No argument(textbox empty) ==> 199 species (each numbered) and a link to the main page.
+    - 15 ==> 15 species (form Mouse to Microbat) each one numbered and a link to the main page.
+    - 150000 ==> 199 species (from Mouse to Microbat) each one numbered and a link to the main page.
+
+Test results of karyotype:
+    - Empty textbox (default: Homo sapiens) ==> 25 chromosomes, 1-22 in respective order, 23 = X, 24 = Y, 25 = MT. A link to the main page below.
+    - Mus musculus ==> 22 chromosomes, 1-19 in respective order, 20 = X, 21 = Y, 22 = MT. A link to the main page below.
+    - Danio rerio ==> 26 chromosomes, 1-25 in respective order, 26 = MT. A link to the main page below.
+
+Test results for chromosome length:
+    - Specie: Homo Sapiens, Chromosome: 8. Resulting on the following number, 145138636. A Link to the main page below.
+    - Specie: Mus musculus, chromosome: 15. Resulting on the following number, 104043685. A link to the main page below.
+    - Specie: Danio rerio, Chromosome: 25. Resulting on the following number, 37502051. A link to the main page below.
+
+Endpoints:
+    - / ==> Main page. As well as /Index.html.
+    - /listSpecies ==> Page to list vertebrates in the Ensembl database(first link)
+    - /karyotype ==> Page to consult number of chromosomes of a species (second link)
+    - /chromosomeLength ==> page to consult length of a given chromosome in a species (third link)
+    - Any typo (excluding letter casing) ends in the error page with a link to the main page.
