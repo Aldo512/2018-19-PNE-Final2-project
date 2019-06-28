@@ -3,7 +3,6 @@ import socketserver
 import termcolor
 import requests
 import sys
-
 # Server port at 8080
 PORT = 8080
 
@@ -14,15 +13,20 @@ htmlheader = '''<!DOCTYPE html>
 htmlend = '''</body>
 </html>'''
 
-spctitle = '''    <title>List of species</title>
+titlespcs = '''    <title>List of species</title>
 </head>
 <body style="background-color: yellow">'''
+
+titlekar = '''    <title>Karyotype</title>
+</head>
+<body style="background-color: lightblue">'''
 #_________________________Counting species______________________________
 
 server = "http://rest.ensembl.org"
 ext = "/info/species?"
 
 #________________________Request for species________________________________
+
 data = []
 def countsp(*args):
     r = requests.get(server + ext, headers={"Content-Type": "application/json"})
@@ -84,7 +88,26 @@ def chromo(species, number):
 
     return decoded['length']
 
-#_______________________/\/\/\/\/\/\/\_____________________________________
+#_______________________/\/\/\/\/\/\/\_______________________________________
+
+
+#_____________________Request for gene id_____________________________________
+
+def geneseq(gen):
+
+    ext4 = '/homology/symbol/human/'
+    gene = gen
+    u = requests.get(server + ext4 + gene, headers={"Content-Type": "application/json"})
+
+    if not u.ok:
+        u.raise_for_status()
+        sys.exit()
+
+    decoded = u.json()
+    return decoded['data'][0]['homologies'][0]['target']['align_seq']
+
+
+#_______________________/\/\/\/\/\/\/\________________________________________
 class TestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -94,7 +117,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         # Message to send back to the client
         rqst = self.requestline.split(' ')
         got = rqst[1]
-        dict1 = {'/': 'Index.html', '/Index.html': 'Index.html', '/lele': 'lele.html', '/listSpecies': 'Species.html', '/karyotype': 'Karyotype.html', '/chromosomeLength': 'Chromosome.html', '/favicon.ico': 'favicon.ico'}
+        dict1 = {'/': 'Index.html', '/Index.html': 'Index.html', '/lele': 'lele.html', '/listSpecies': 'listSpecies.html', '/karyotype': 'Karyotype.html', '/chromosomeLength': 'Chromosome.html', '/favicon.ico': 'favicon.ico', '/geneSeq': 'geneseq.html'}
         print(got)
 
         try:
@@ -123,6 +146,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
                 lstnm = 1
                 docu = open('Results.html', 'w+')
+                docu.write(htmlheader + '\n' + titlespcs)
 
                 for i in data:
                     docu.write(str(lstnm) + '. ')
@@ -132,6 +156,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                     lstnm += 1
 
                 docu.write('<a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
                 docu.close()
                 docu = open('Results.html', 'r')
                 contents = docu.read()
@@ -141,6 +166,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
                 docu = open('Karyoresults.html', 'w+')
                 lstnm = 1
+                docu.write(htmlheader)
 
                 if got[-1] != '=':
                     decoding = kary(got[got.find('=')+1:])
@@ -153,6 +179,8 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                 decoded = decoding['karyotype']
 
 
+                docu.write(titlekar)
+
                 for i in decoded:
 
                     docu.write(str(lstnm) + '. ')
@@ -162,16 +190,19 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                     lstnm += 1
 
                 docu.write('<a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
                 docu.close()
                 docu = open('Karyoresults.html', 'r')
                 contents = docu.read()
                 docu.close()
 
-            elif got.find('Chromolength') == True:
+            elif got.find('chromosomeLength?') == True:
+
+                got = got.replace(';', '&')
+                termcolor.cprint(got, 'magenta')
 
                 chrm = got[got.find('=')+1:got.find('&')].replace('+', ' ')
-                chrnmr = got[got.find('chromosome') + 11:]
-                termcolor.cprint(chrm + chrnmr, 'yellow')
+                chrnmr = got[got.find('chromo=') + 7:]
                 infor = chromo(chrm, chrnmr)
                 docu = open('Chromoresults.html', 'w+')
                 docu.write(str(chrm + ' ' + chrnmr) + '</br>')
@@ -179,6 +210,19 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                 docu.write('</br> <a href="Index.html">Main menu</a>')
                 docu.close()
                 docu = open('Chromoresults.html', 'r')
+                contents = docu.read()
+                docu.close()
+
+            elif got.find('geneSeq?') == True:
+
+                gene = got[got.find('=')+1:]
+                infor = geneseq(gene)
+                docu = open('Seqresults.html', 'w+')
+                docu.write('Sequence returned for ' + gene + ':' + '\n' + '</br>')
+                docu.write(infor)
+                docu.write('\n' + '</br> <a href="Index.html">Main menu</a>')
+                docu.close()
+                docu = open('Seqresults.html', 'r')
                 contents = docu.read()
                 docu.close()
 

@@ -22,7 +22,7 @@ Test results for chromosome length:
 
 Endpoints:
     - / ==> Main page. As well as /Index.html.
-    - /listSpecies ==> Page to list vertebrates in the Ensembl database(first link)
-    - /karyotype ==> Page to consult number of chromosomes of a species (second link)
+    - /listSpecies?limit=105 ==> 105 species listed on the page
+    - /karyotype?specie=Danio+rerio ==> Danio rerio's chromosome list
     - /chromosomeLength ==> page to consult length of a given chromosome in a species (third link)
     - Any typo (excluding letter casing) ends in the error page with a link to the main page.
