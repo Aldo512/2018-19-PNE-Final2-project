@@ -1,8 +1,7 @@
 import http.server
 import socketserver
 import termcolor
-import requests
-import sys
+import serverfunctions
 # Server port at 8080
 PORT = 8080
 
@@ -29,169 +28,19 @@ titlegenesq = '''    <title>Gene sequence</title>
 </head>
 <body style="background-color: orange">'''
 
-titlegeneinfo =  '''    <title>Gene sequence</title>
+titlegeneinfo =  '''    <title>Gene info</title>
 </head>
 <body style="background-color: gold">'''
 
-titlegenecalc = '''    <title>Gene sequence</title>
+titlegenecalc = '''    <title>Gene calculations</title>
 </head>
 <body style="background-color: olive">'''
-#_________________________Counting species______________________________
 
-server = "http://rest.ensembl.org"
-ext = "/info/species?"
-
-#________________________Request for species________________________________
+titlegenelist = '''    <title>Gene list</title>
+</head>
+<body style="background-color: teal">'''
 
 
-def countsp(*args):
-    r = requests.get(server + ext, headers={"Content-Type": "application/json"})
-
-    if not r.ok:
-        r.raise_for_status()
-        sys.exit()
-
-    decoded = r.json()
-    data = []
-
-    if args:
-        data.clear()
-        spc = args[0]
-        for i in range(spc):
-            data.append(decoded['species'][i]['display_name'])
-
-    else:
-        spc = int(repr(decoded['species']).count('display_name'))
-        data.clear()
-
-        for i in range(len(decoded['species'])):
-            data.append(decoded['species'][i]['display_name'])
-
-    return data
-
-#___________________________/\/\/\/\_____________________________________
-
-
-#________________________Request for karyotype___________________________
-
-def kary(spcname):
-
-    spcname = spcname.replace('+', '_')
-
-    ext2 = "/info/assembly/homo_sapiens?"
-    spc = ext2[0:ext2.find('y')+2] + spcname
-    s = requests.get(server + spc, headers={"Content-Type": "application/json"})
-
-    if not s.ok:
-        s.raise_for_status()
-        sys.exit()
-
-    decoded = s.json()
-    return decoded
-
-#_________________________/\/\/\/\/\_______________________________________
-
-
-#________________________Request for chromosomes___________________________
-
-def chromo(species, number):
-
-    ext3 = "/info/assembly/"
-    spcs = species.replace('%20', ' ')
-    nmbr = str(number)
-    t = requests.get(server + ext3 + spcs + '/' + nmbr, headers={"Content-Type": "application/json"})
-
-    if not t.ok:
-        t.raise_for_status()
-        sys.exit()
-
-    decoded = t.json()
-
-    return decoded['length']
-
-#_______________________/\/\/\/\/\/\/\_______________________________________
-
-
-#_____________________Request for gene sequence_____________________________________
-
-def geneseq(gen):
-
-    ext4 = '/homology/symbol/human/'
-    gene = gen
-    u = requests.get(server + ext4 + gene, headers={"Content-Type": "application/json"})
-
-    if not u.ok:
-        u.raise_for_status()
-        sys.exit()
-
-    decoded = u.json()
-    return decoded['data'][0]['homologies'][0]['target']['align_seq']
-
-#_______________________/\/\/\/\/\/\/\___________________________________________
-
-
-#________________________Request for gene information_____________________________
-
-def geneinfo(symbol):
-
-    if symbol.find('ENG') != -1:
-
-        return 'Error. Enter a valid gene symbol'
-
-    ext = "/xrefs/symbol/homo_sapiens/"
-    symb = symbol
-
-    r = requests.get(server + ext + symb, headers={"Content-Type": "application/json"})
-
-    if not r.ok:
-        r.raise_for_status()
-        sys.exit()
-
-    decoded = r.json()
-    smbl= decoded[0]['id']
-
-    ext2 = "/lookup/id/"
-
-    s = requests.get(server + ext2 + smbl, headers={"Content-Type": "application/json"})
-
-    if not s.ok:
-        s.raise_for_status()
-        sys.exit()
-
-    infor = s.json()
-
-    ext3 = "/sequence/id/"
-
-    codons = requests.get(server + ext3 + smbl, headers={"Content-Type": "text/plain"})
-
-    if not codons.ok:
-        codons.raise_for_status()
-        sys.exit()
-
-    return infor['seq_region_name'], infor['start'], infor['end'], smbl, codons.text
-
-#_____________________________/\/\/\/\/\/\/\__________________________________________________
-
-
-#____________________________Request for gene calculations____________________________________
-
-def genecalc(gne):
-    data =geneinfo(gne)
-
-    As = data[4].upper().count('A')
-    Ts = data[4].upper().count('T')
-    Cs = data[4].upper().count('C')
-    Gs = data[4].upper().count('G')
-    total = As+Cs+Ts+Gs
-
-    PrA = round((As/total)*100, 2)
-    PrT = round((Ts/total)*100, 2)
-    PrC = round((Cs/total)*100, 2)
-    PrG = round((Gs/total)*100, 2)
-
-    return As, Ts, Cs, Gs, total, PrA, PrT, PrC, PrG
-
-#____________________________/\/\/\/\/\/\/\/\/\_______________________________________________
 class TestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -203,7 +52,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         got = rqst[1]
         dict1 = {'/': 'Index.html', '/Index.html': 'Index.html', '/lele': 'lele.html', '/listSpecies': 'listSpecies.html',
                  '/karyotype': 'Karyotype.html', '/chromosomeLength': 'Chromosome.html', '/favicon.ico': 'favicon.ico',
-                 '/geneSeq': 'geneseq.html', '/geneInfo': 'geneInfo.html', '/geneCalc': 'geneCalc.html'}
+                 '/geneSeq': 'geneseq.html', '/geneInfo': 'geneInfo.html', '/geneCalc': 'geneCalc.html', '/geneList': 'geneList.html'}
         print(got)
 
         try:
@@ -215,7 +64,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             if got.find('listSpecies?') == True:
 
-
+                countsp = serverfunctions.countsp
 
                 if got[got.find('=')] != got[-1]:
                     datacnt = int(got[got.find('=')+1:])
@@ -248,6 +97,8 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('karyotype?') == True:
 
+                kary = serverfunctions.kary
+
                 if got[-1] != '=':
 
                     docu = open('Karyoresults.html', 'w+')
@@ -278,12 +129,13 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('chromosomeLength?') == True:
 
+                chromo = serverfunctions.chromo
                 got = got.replace(';', '&')
                 termcolor.cprint(got, 'magenta')
 
                 chrm = got[got.find('=')+1:got.find('&')].replace('+', ' ')
                 chrnmr = got[got.find('chromo=') + 7:]
-                infor = chromo(chrm, chrnmr)
+                infor = chromo(chrm,chrnmr)
                 docu = open('Chromoresults.html', 'w+')
                 docu.write(htmlheader)
                 docu.write(titlechromol)
@@ -298,6 +150,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('geneSeq?') == True:
 
+                geneseq = serverfunctions.geneseq
                 got = got.replace(';', '&')
                 gene = got[got.find('=')+1:]
                 infor = geneseq(gene)
@@ -315,6 +168,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('geneInfo?') == True:
 
+                geneinfo = serverfunctions.geneinfo
                 gene = got[got.find('=') + 1:]
                 docu = open('Inforesults.html', 'w+')
                 inf = geneinfo(gene)
@@ -334,6 +188,7 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('geneCalc?') == True:
 
+                genecalc = serverfunctions.genecalc
                 gene = got[got.find('=') + 1:]
                 docu = open('Calcresults.html', 'w+')
                 docu.write(htmlheader)
@@ -349,6 +204,27 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                 docu.write(htmlend)
                 docu.close()
                 docu = open('Calcresults.html', 'r')
+                contents = docu.read()
+                docu.close()
+
+            elif got.find('geneList?') == True:
+
+                genelist = serverfunctions.genelist
+                got = got.replace(';', '&')
+                chromo = got[got.find('chromo')+7:got.find('start')-1]
+                start = got[got.find('start')+6:got.find('end')-1]
+                end = got[got.find('end')+4:]
+                docu = open('Listresults.html', 'w+')
+                docu.write(htmlheader)
+                docu.write(titlegenelist)
+                docu.write('Results shown for the given parameters: \n</br>Chromosome: ' + chromo + '\n</br>Start point: ' + start + '\n</br>Endpoint: ' + end + '\n</br></br>' + 'Genes in the given region: \n</br></br>')
+                data = genelist(chromo,start,end)
+                for i in range(len(data)):
+                    docu.write(data[i]['external_name'] + '\n' + '</br>')
+                docu.write('<a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
+                docu.close()
+                docu = open('Listresults.html', 'r')
                 contents = docu.read()
                 docu.close()
 

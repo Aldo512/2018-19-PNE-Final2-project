@@ -1,12 +1,22 @@
 import requests, sys
 
 server = "http://rest.ensembl.org"
-ext = "/sequence/id/ENSG00000165879?"
 
-r = requests.get(server + ext, headers={"Content-Type": "text/plain"})
+def genelist(chromo, start, end):
 
-if not r.ok:
-    r.raise_for_status()
-    sys.exit()
+    ext = "/overlap/region/human/"
+    chromo = str(chromo)
+    start = str(start)
+    end = str(end)
 
-print(len(r.text))
+    r = requests.get(server + ext + chromo + ':' + start + '-' + end + '?feature=gene', headers={"Content-Type": "application/json"})
+
+    if not r.ok:
+        r.raise_for_status()
+        sys.exit()
+
+    decoded = r.json()
+
+    return decoded
+
+print(genelist(10,97319267,97321915))
