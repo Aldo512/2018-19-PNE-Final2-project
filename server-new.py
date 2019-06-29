@@ -20,6 +20,22 @@ titlespcs = '''    <title>List of species</title>
 titlekar = '''    <title>Karyotype</title>
 </head>
 <body style="background-color: lightblue">'''
+
+titlechromol= '''    <title>Chromosome length</title>
+</head>
+<body style="background-color: magenta">'''
+
+titlegenesq = '''    <title>Gene sequence</title>
+</head>
+<body style="background-color: orange">'''
+
+titlegeneinfo =  '''    <title>Gene sequence</title>
+</head>
+<body style="background-color: gold">'''
+
+titlegenecalc = '''    <title>Gene sequence</title>
+</head>
+<body style="background-color: olive">'''
 #_________________________Counting species______________________________
 
 server = "http://rest.ensembl.org"
@@ -27,7 +43,7 @@ ext = "/info/species?"
 
 #________________________Request for species________________________________
 
-data = []
+
 def countsp(*args):
     r = requests.get(server + ext, headers={"Content-Type": "application/json"})
 
@@ -36,17 +52,22 @@ def countsp(*args):
         sys.exit()
 
     decoded = r.json()
+    data = []
 
     if args:
+        data.clear()
         spc = args[0]
+        for i in range(spc):
+            data.append(decoded['species'][i]['display_name'])
 
     else:
         spc = int(repr(decoded['species']).count('display_name'))
+        data.clear()
 
-    for spec in range(spc):
-        data.append(decoded['species'][spec]['display_name'])
+        for i in range(len(decoded['species'])):
+            data.append(decoded['species'][i]['display_name'])
 
-    return decoded
+    return data
 
 #___________________________/\/\/\/\_____________________________________
 
@@ -91,7 +112,7 @@ def chromo(species, number):
 #_______________________/\/\/\/\/\/\/\_______________________________________
 
 
-#_____________________Request for gene id_____________________________________
+#_____________________Request for gene sequence_____________________________________
 
 def geneseq(gen):
 
@@ -106,8 +127,71 @@ def geneseq(gen):
     decoded = u.json()
     return decoded['data'][0]['homologies'][0]['target']['align_seq']
 
+#_______________________/\/\/\/\/\/\/\___________________________________________
 
-#_______________________/\/\/\/\/\/\/\________________________________________
+
+#________________________Request for gene information_____________________________
+
+def geneinfo(symbol):
+
+    if symbol.find('ENG') != -1:
+
+        return 'Error. Enter a valid gene symbol'
+
+    ext = "/xrefs/symbol/homo_sapiens/"
+    symb = symbol
+
+    r = requests.get(server + ext + symb, headers={"Content-Type": "application/json"})
+
+    if not r.ok:
+        r.raise_for_status()
+        sys.exit()
+
+    decoded = r.json()
+    smbl= decoded[0]['id']
+
+    ext2 = "/lookup/id/"
+
+    s = requests.get(server + ext2 + smbl, headers={"Content-Type": "application/json"})
+
+    if not s.ok:
+        s.raise_for_status()
+        sys.exit()
+
+    infor = s.json()
+
+    ext3 = "/sequence/id/"
+
+    codons = requests.get(server + ext3 + smbl, headers={"Content-Type": "text/plain"})
+
+    if not codons.ok:
+        codons.raise_for_status()
+        sys.exit()
+
+    return infor['seq_region_name'], infor['start'], infor['end'], smbl, codons.text
+
+#_____________________________/\/\/\/\/\/\/\__________________________________________________
+
+
+#____________________________Request for gene calculations____________________________________
+
+def genecalc(gne):
+    data =geneinfo(gne)
+
+    As = data[4].upper().count('A')
+    Ts = data[4].upper().count('T')
+    Cs = data[4].upper().count('C')
+    Gs = data[4].upper().count('G')
+    total = As+Cs+Ts+Gs
+
+    PrA = round((As/total)*100, 2)
+    PrT = round((Ts/total)*100, 2)
+    PrC = round((Cs/total)*100, 2)
+    PrG = round((Gs/total)*100, 2)
+
+    return As, Ts, Cs, Gs, total, PrA, PrT, PrC, PrG
+
+#____________________________/\/\/\/\/\/\/\/\/\_______________________________________________
 class TestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -117,7 +201,9 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
         # Message to send back to the client
         rqst = self.requestline.split(' ')
         got = rqst[1]
-        dict1 = {'/': 'Index.html', '/Index.html': 'Index.html', '/lele': 'lele.html', '/listSpecies': 'listSpecies.html', '/karyotype': 'Karyotype.html', '/chromosomeLength': 'Chromosome.html', '/favicon.ico': 'favicon.ico', '/geneSeq': 'geneseq.html'}
+        dict1 = {'/': 'Index.html', '/Index.html': 'Index.html', '/lele': 'lele.html', '/listSpecies': 'listSpecies.html',
+                 '/karyotype': 'Karyotype.html', '/chromosomeLength': 'Chromosome.html', '/favicon.ico': 'favicon.ico',
+                 '/geneSeq': 'geneseq.html', '/geneInfo': 'geneInfo.html', '/geneCalc': 'geneCalc.html'}
         print(got)
 
         try:
@@ -129,20 +215,18 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             if got.find('listSpecies?') == True:
 
-                data.clear()
-                datacnt = 0
+
 
                 if got[got.find('=')] != got[-1]:
                     datacnt = int(got[got.find('=')+1:])
 
                     try:
-                        countsp(datacnt)
+                        data = countsp(datacnt)
 
                     except IndexError:
-                        data.clear()
-                        countsp()
+                        data = countsp()
                 else:
-                    countsp()
+                    data = countsp()
 
                 lstnm = 1
                 docu = open('Results.html', 'w+')
@@ -164,35 +248,31 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('karyotype?') == True:
 
-                docu = open('Karyoresults.html', 'w+')
-                lstnm = 1
-                docu.write(htmlheader)
-
                 if got[-1] != '=':
+
+                    docu = open('Karyoresults.html', 'w+')
+                    lstnm = 1
+                    docu.write(htmlheader)
                     decoding = kary(got[got.find('=')+1:])
-                    docu.write('Results for ' + got[got.find('=')+1:].replace('+', ' ') + '</br>')
+                    docu.write('Results for chromosome names in: ' + got[got.find('=')+1:].replace('+', ' ') + '</br></br>')
+                    decoded = decoding['karyotype']
+                    docu.write(titlekar)
+
+                    for i in decoded:
+                        docu.write(str(lstnm) + '. ')
+                        docu.write(i)
+                        docu.write('\n')
+                        docu.write('</br>')
+                        lstnm += 1
+
+                    docu.write('<a href="Index.html">Main menu</a>')
+                    docu.write(htmlend)
+                    docu.close()
+                    docu = open('Karyoresults.html', 'r')
 
                 else:
-                    decoding = kary('homo_sapiens')
-                    docu.write('Results for Homo Sapiens </br>')
+                    docu = open('Error.html', 'r')
 
-                decoded = decoding['karyotype']
-
-
-                docu.write(titlekar)
-
-                for i in decoded:
-
-                    docu.write(str(lstnm) + '. ')
-                    docu.write(i)
-                    docu.write('\n')
-                    docu.write('</br>')
-                    lstnm += 1
-
-                docu.write('<a href="Index.html">Main menu</a>')
-                docu.write(htmlend)
-                docu.close()
-                docu = open('Karyoresults.html', 'r')
                 contents = docu.read()
                 docu.close()
 
@@ -205,9 +285,12 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
                 chrnmr = got[got.find('chromo=') + 7:]
                 infor = chromo(chrm, chrnmr)
                 docu = open('Chromoresults.html', 'w+')
-                docu.write(str(chrm + ' ' + chrnmr) + '</br>')
-                docu.write(str(infor))
+                docu.write(htmlheader)
+                docu.write(titlechromol)
+                docu.write(str(chrm + ' ' + '</br>' + 'chromosome: ' + chrnmr) + '</br>')
+                docu.write('chromosome length: ' + str(infor))
                 docu.write('</br> <a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
                 docu.close()
                 docu = open('Chromoresults.html', 'r')
                 contents = docu.read()
@@ -215,17 +298,59 @@ class TestHandler(http.server.BaseHTTPRequestHandler):
 
             elif got.find('geneSeq?') == True:
 
+                got = got.replace(';', '&')
                 gene = got[got.find('=')+1:]
                 infor = geneseq(gene)
                 docu = open('Seqresults.html', 'w+')
+                docu.write(htmlheader)
+                docu.write(titlegenesq)
                 docu.write('Sequence returned for ' + gene + ':' + '\n' + '</br>')
                 docu.write(infor)
                 docu.write('\n' + '</br> <a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
                 docu.close()
                 docu = open('Seqresults.html', 'r')
                 contents = docu.read()
                 docu.close()
 
+            elif got.find('geneInfo?') == True:
+
+                gene = got[got.find('=') + 1:]
+                docu = open('Inforesults.html', 'w+')
+                inf = geneinfo(gene)
+                docu.write(htmlheader)
+                docu.write(titlegeneinfo)
+                docu.write('Results for: ' + gene)
+                docu.write('\n' + '</br>' + 'The gene is located in the chromosome: ' + str(inf[0]))
+                docu.write('\n' + '</br>' + 'The gene is located between the bases number ' + str(inf[1]) + ' and ' + str(inf[2]))
+                docu.write('\n' + '</br>' + 'The Ensembl id for the given gene is:  ' + str(inf[3]))
+                docu.write('\n' + '</br>' + 'This gene has a length of: ' + str(len(inf[4])) + ' bases.')
+                docu.write('\n' + '</br> <a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
+                docu.close()
+                docu = open('Inforesults.html', 'r')
+                contents = docu.read()
+                docu.close()
+
+            elif got.find('geneCalc?') == True:
+
+                gene = got[got.find('=') + 1:]
+                docu = open('Calcresults.html', 'w+')
+                docu.write(htmlheader)
+                docu.write(titlegenecalc)
+                data = genecalc(gene)
+                docu.write('Showing results for: ' + gene + '\n' + '</br>')
+                docu.write('The total amount of bases in the gene is: ' + str(data[4]) + '\n' + '</br>')
+                docu.write('The total amount of As in the sequence are: ' + str(data[0]) + ' which corresponds to the ' + str(data[5]) + '%' + ' of the total bases' + '\n' + '</br>')
+                docu.write('The total amount of Ts in the sequence are: ' + str(data[1]) + ' which corresponds to the ' + str(data[6]) + '%' + ' of the total bases' + '\n' + '</br>')
+                docu.write('The total amount of Cs in the sequence are: ' + str(data[2]) + ' which corresponds to the ' + str(data[7]) + '%' + ' of the total bases' + '\n' + '</br>')
+                docu.write('The total amount of Gs in the sequence are: ' + str(data[3]) + ' which corresponds to the ' + str(data[8]) + '%' + ' of the total bases' + '\n' + '</br>')
+                docu.write('<a href="Index.html">Main menu</a>')
+                docu.write(htmlend)
+                docu.close()
+                docu = open('Calcresults.html', 'r')
+                contents = docu.read()
+                docu.close()
 
             if got in dict1:
 
