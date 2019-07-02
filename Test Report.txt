@@ -1,28 +1,150 @@
-Results got during my testing of the first part of the final project:
+TEST REPORT:
 
-Im using 3 different species to test results on each subpage:
-    - Homo sapiens
-    - Mus Musculus
-    - Danio rerio
+--------------------------------------------------------------------------------BASIC LEVEL----------------------------------------------------------------------------------------
 
-Test results of list of species:
-    - No argument(textbox empty) ==> 199 species (each numbered) and a link to the main page.
-    - 15 ==> 15 species (form Mouse to Microbat) each one numbered and a link to the main page.
-    - 150000 ==> 199 species (from Mouse to Microbat) each one numbered and a link to the main page.
+ENDPOINT TESTED: http://localhost:8080/listSpecies?limit=10
 
-Test results of karyotype:
-    - Empty textbox (default: Homo sapiens) ==> 25 chromosomes, 1-22 in respective order, 23 = X, 24 = Y, 25 = MT. A link to the main page below.
-    - Mus musculus ==> 22 chromosomes, 1-19 in respective order, 20 = X, 21 = Y, 22 = MT. A link to the main page below.
-    - Danio rerio ==> 26 chromosomes, 1-25 in respective order, 26 = MT. A link to the main page below.
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of species</title>
+</head>
+<body style="background-color: yellow">1. Orangutan
+</br>2. Flycatcher
+</br>3. White-throated sparrow
+</br>4. Tongue sole
+</br>5. Pig-tailed macaque
+</br>6. Mongolian gerbil
+</br>7. Bonobo
+</br>8. Naked mole-rat male
+</br>9. Chimpanzee
+</br>10. Guppy
+</br><a href="Index.html">Main menu</a></body>
+</html>
 
-Test results for chromosome length:
-    - Specie: Homo Sapiens, Chromosome: 8. Resulting on the following number, 145138636. A Link to the main page below.
-    - Specie: Mus musculus, chromosome: 15. Resulting on the following number, 104043685. A link to the main page below.
-    - Specie: Danio rerio, Chromosome: 25. Resulting on the following number, 37502051. A link to the main page below.
+ENDPOINT TESTED: http://localhost:8080/listSpecies
 
-Endpoints:
-    - / ==> Main page. As well as /Index.html.
-    - /listSpecies?limit=105 ==> 105 species listed on the page
-    - /karyotype?specie=Danio+rerio ==> Danio rerio's chromosome list
-    - /chromosomeLength ==> page to consult length of a given chromosome in a species (third link)
-    - Any typo (excluding letter casing) ends in the error page with a link to the main page.
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of species</title>
+</head>
+<body style="background-color: yellow">
+        <form action ="listSpecies" method = "get">
+            Number of species to display (optional): <input type="text" name = "limit">
+            <input type="submit" value="Send"></form>
+    </br><a href="Index.html">Main menu</a>
+</body>
+</html>
+
+ENDPOINT TESTED: http://localhost:8080/karyotype?specie=mouse
+
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">Results for chromosome names in: mouse</br></br>    <title>Karyotype</title>
+</head>
+<body style="background-color: lightblue">1. 1
+</br>2. 2
+</br>3. 3
+</br>4. 4
+</br>5. 5
+</br>6. 6
+</br>7. 7
+</br>8. 8
+</br>9. 9
+</br>10. 10
+</br>11. 11
+</br>12. 12
+</br>13. 13
+</br>14. 14
+</br>15. 15
+</br>16. 16
+</br>17. 17
+</br>18. 18
+</br>19. 19
+</br>20. X
+</br>21. Y
+</br>22. MT
+</br><a href="Index.html">Main menu</a></body>
+</html>
+
+
+ENDPOINT TESTED: http://localhost:8080/chromosomeLength?specie=mouse;chromo=18
+
+SERVER RESPONSE:<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">    <title>Chromosome length</title>
+</head>
+<body style="background-color: magenta">mouse </br>chromosome: 18</br>chromosome length: 90702639</br> <a href="Index.html">Main menu</a></body>
+</html>
+
+----------------------------------------------------------------MEDIUM LEVEL--------------------------------------------------------------------------------------------------------------
+
+ENDPOINT TESTED: http://localhost:8080/geneSeq?gene=FRAT1
+
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">    <title>Gene sequence</title>
+</head>
+<body style="background-color: orange">Sequence returned for FRAT1:
+</br>MPCRREEEEEAGEEAEGEEEEEDSFLLLQQSVALGSSGEVDRLVAQIGETLQLDAAQHSPASPCGPPGALLRAPGPLAAAVPADKARSPAVPLLLPPASAETVGPAPPGVLRCALGDRGRVRGRAAPYCVAELATGPGALSPLPPQADLDGPPGAGKQGIPQPLSGPCRRGWLRGAAASRRLQQRRGSQPETRTGDDDPHRLLQQLVLSGNLIKEAVRRLHSRRLQLRAKLPQRPLLGPLSAPVHEPPSPRSPRAACSDPGASGRAQLRTGDGVLVPGS
+</br> <a href="Index.html">Main menu</a></body>
+</html>
+
+
+ENDPOINT TESTED: http://localhost:8080/geneInfo?gene=FRAT1
+
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">    <title>Gene info</title>
+</head>
+<body style="background-color: gold">Results for: FRAT1
+</br>The gene is located in the chromosome: 10
+</br>The gene is located between the bases number 97319267 and 97321915
+</br>The Ensembl id for the given gene is:  ENSG00000165879
+</br>This gene has a length of: 2649 bases.
+</br> <a href="Index.html">Main menu</a></body>
+</html>
+
+
+ENDPOINT TESTED: http://localhost:8080/geneCalc?gene=FRAT1
+
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">    <title>Gene calculations</title>
+</head>
+<body style="background-color: olive">Showing results for: FRAT1
+</br>The total amount of bases in the gene is: 2649
+</br>The total amount of As in the sequence are: 478 which corresponds to the 18.04% of the total bases
+</br>The total amount of Ts in the sequence are: 522 which corresponds to the 19.71% of the total bases
+</br>The total amount of Cs in the sequence are: 800 which corresponds to the 30.2% of the total bases
+</br>The total amount of Gs in the sequence are: 849 which corresponds to the 32.05% of the total bases
+</br><a href="Index.html">Main menu</a></body>
+</html>
+
+
+ENDPOINT TESTED: http://localhost:8080/geneList?chromo=1;start=0;end=30000
+
+SERVER RESPONSE: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">    <title>Gene list</title>
+</head>
+<body style="background-color: teal">Results shown for the given parameters:
+</br>Chromosome: 1
+</br>Start point: 0
+</br>Endpoint: 30000
+</br></br>Genes in the given region:
+</br></br>DDX11L1
+</br>WASH7P
+</br>MIR6859-1
+</br>MIR1302-2HG
+</br><a href="Index.html">Main menu</a></body>
+</html>
